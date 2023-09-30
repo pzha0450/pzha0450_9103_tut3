@@ -9,5 +9,7 @@ The artwork selected by the group is characterized by rectangles of different si
 
 # Part 2: Coding Technique Exploration
 ![Coding Technique Exploration](readmeImages/Coding%20Technique%20Exploration-1.jpg)
+
 [Link Text](https://happycoding.io/tutorials/p5js/arrays/fading-grid)
+
 A technique called Fading Grid might help the group implement the image techniques mentioned in part 1. As this code shows, when the mouse moves over the grid background, the small rectangular block it passes through changes from the original blue to red, and gradually returns to blue as the mouse moves away. This image technique helps to achieve the effect of mouse tracking in the group artwork by changing the color of the rectangular blocks touched by the mouse. At the same time, the effect of color gradients is a great improvement for visual art.
