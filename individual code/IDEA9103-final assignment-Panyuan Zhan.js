@@ -13,9 +13,11 @@ let rectanglesList = []; // Array to store the rectangle objects.
 
 // Function to generate a random integer between 'a' and 'b'.
 let randomInteger = (a, b) => floor(random(a, b));
-let animationDuration = 60; // Duration of the animation in frames
+
+let animationDuration = 40; // Duration of the animation in frames
 let animationFrame = 0; // Current frame of the animation
 let animationActive = false; // Flag to control the animation
+let refreshTimer; //Set a page refresh timer
 
 function setup() {
   createCanvas(windowWidth, windowHeight); // Set up the canvas size.
@@ -35,13 +37,13 @@ function draw() {
       let t = easeInOutQuart(animationFrame / animationDuration);
       
       // Interpolate the background color
-      let lerpedColor = lerpColor(color(255, 252, 242), color(0, 0, 0), t);
+      let lerpedColor = lerpColor(color(255, 252, 242), color(5, 5, 5), t);
       background(lerpedColor);
       
       for (let recta of rectanglesList) {
         // Interpolate the position of each rectangle
-        let newX = lerp(recta.x0, random(width), t);
-        let newY = lerp(recta.y0, random(height), t);
+        let newX = lerp(recta.x0, random(width*2.5), t);
+        let newY = lerp(recta.y0, random(height*2.5), t);
         recta.x0 = newX;
         recta.y0 = newY;
         recta.display();
@@ -49,6 +51,9 @@ function draw() {
       animationFrame++;
     } else {
       animationActive = false;
+
+      // Clear the timer if it's still active
+      clearTimeout(refreshTimer);
     }
   } else {
     for (let recta of rectanglesList) {
@@ -69,8 +74,14 @@ function mouseClicked() {
   if (!animationActive) {
     animationActive = true;
     animationFrame = 0;
+
+    // Set a timeout to refresh the page after the animation duration
+    refreshTimer = setTimeout(() => {
+      location.reload(); // Refresh the page
+    }, animationDuration * 100); 
   }
 }
+
 
 // This function creates the overall composition of rectangles.
 function createComposition() {
