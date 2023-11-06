@@ -13,6 +13,8 @@ let rectanglesList = []; // Array to store the rectangle objects.
 
 // Function to generate a random integer between 'a' and 'b'.
 let randomInteger = (a, b) => floor(random(a, b));
+let animationFrameRate = 5; // Adjust the frame rate as needed.
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight); // Set up the canvas size.
@@ -20,8 +22,49 @@ function setup() {
   unitHeight = unitWidth / 4; // Calculate the unit height as a quarter of the unit width.
   noStroke(); // Disable drawing strokes.
   noLoop(); // Ensure that the draw loop does not loop.
+  frameRate(animationFrameRate); // Set the animation frame rate.
   createComposition(); // Call the function to create the composition.
+  animateComposition(); // Start the animation.
 }
+
+function animateComposition() {
+  let frameCounter = 0;
+  let animationInterval = 1000 / animationFrameRate;
+
+  function animateFrame() {
+    // Clear the canvas on each frame.
+    background(backgroundColor);
+    translate(-width / 2 - unitHeight / 2, -height / 2 - unitHeight / 2);
+    
+    for (let recta of rectanglesList) {
+      recta.display(); // Display each rectangle.
+    }
+
+    if (frameCounter < 2000) {
+      let newRectangle = generateRectangle();
+      let canAdd = true;
+
+      for (let rectangle of rectanglesList) {
+        if (rectangle.intersects(newRectangle)) {
+          canAdd = false;
+          break;
+        }
+      }
+
+      if (canAdd) {
+        rectanglesList.push(newRectangle);
+        frameCounter++;
+      }
+    }
+
+    if (frameCounter < 2000) {
+      setTimeout(animateFrame, animationInterval); // Schedule the next frame.
+    }
+  }
+
+  animateFrame();
+}
+
 
 function draw() {
   background(backgroundColor); // Set the background color.
