@@ -19,6 +19,11 @@ let animationFrame = 0; // Current frame of the animation
 let animationActive = false; // Flag to control the animation
 let refreshTimer; //Set a page refresh timer
 
+//Set icon parameters
+let iconSize = 40; 
+let iconX = 20; 
+let iconY = 20; 
+
 function setup() {
   createCanvas(windowWidth, windowHeight); // Set up the canvas size.
   unitWidth = width / 16;  // Calculate the unit width based on canvas width.
@@ -26,10 +31,13 @@ function setup() {
   noStroke(); // Disable drawing strokes.
   createComposition(); // Call the function to create the composition.
   frameRate(10);
+
 }
 
 function draw() {
   background(backgroundColor); // Set the background color.
+  
+  push();
   translate(-width / 2 - unitHeight / 2, -height / 2 - unitHeight / 2); // Center the composition.
   if (animationActive) {
     if (animationFrame <= animationDuration) {
@@ -60,6 +68,18 @@ function draw() {
       recta.display();
     }
   }
+  pop();
+  //draw the icon
+  fill(239, 86, 47); 
+  stroke(255); 
+  strokeWeight(2);
+  ellipse(iconX + iconSize / 2, iconY + iconSize / 2, iconSize);
+  noStroke();
+  fill(255); 
+  textSize(8); 
+  textAlign(CENTER, CENTER);
+  text("Click Me", iconX + iconSize / 2, iconY + iconSize / 2);
+  
 }
 
 function easeInOutQuart(t) {
@@ -72,16 +92,18 @@ function easeInOutQuart(t) {
 
 function mouseClicked() {
   if (!animationActive) {
-    animationActive = true;
-    animationFrame = 0;
+    // Check that the mouse is within range of the icon
+    if (mouseX > iconX && mouseX < iconX + iconSize && mouseY > iconY && mouseY < iconY + iconSize) {
+      animationActive = true;
+      animationFrame = 0;
 
-    // Set a timeout to refresh the page after the animation duration
-    refreshTimer = setTimeout(() => {
-      location.reload(); // Refresh the page
-    }, animationDuration * 100); 
+      // Set a timeout to refresh the page after the animation duration
+      refreshTimer = setTimeout(() => {
+        location.reload(); // Refresh the page
+      }, animationDuration * 100);
+    }
   }
 }
-
 
 // This function creates the overall composition of rectangles.
 function createComposition() {
