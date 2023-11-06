@@ -13,81 +13,9 @@ let rectanglesList = []; // Array to store the rectangle objects.
 
 // Function to generate a random integer between 'a' and 'b'.
 let randomInteger = (a, b) => floor(random(a, b));
-
-class RectangularBlock {
-  constructor(x, y, width, height, insideColor) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.insideColor = insideColor;
-    this.targetX = random(0, width - unitWidth); // Target X position
-    this.targetY = random(0, height - unitWidth); // Target Y position
-    this.easing = 0.001; // Easing coefficient
-  }
-
-  // Method to check if this rectangle intersects with another one.
-  intersects(otherRect) {
-    return (
-      (this.x <= otherRect.x + otherRect.width && this.x + this.width >= otherRect.x) &&
-      (this.y <= otherRect.y + otherRect.height && this.y + this.height >= otherRect.y)
-    );
-  }
-
-  // Method to update the position of the rectangle with easing.
-  updatePosition() {
-    // Computational easing
-    this.x += (this.targetX - this.x) * this.easing;
-    this.y += (this.targetY - this.y) * this.easing;
-  }
-
-  // Method to display the rectangle.
-  display() {
-    if (this.insideColor) {
-      fill(this.insideColor);
-      rect(this.x + 2 * unitHeight, this.y + 2 * unitHeight, this.width - 3 * unitHeight, this.height - 3 * unitHeight);
-      if ((this.width - this.height) < 2 * unitWidth) {
-        fill(colorPalette[floor(random(colorPalette.length))]);
-        if (this.width < this.height) {
-          rect(this.x + 3 * unitHeight, this.y + (this.height - (this.width - 6 * unitHeight)) / 2, this.width - 5 * unitHeight, this.width - 5 * unitHeight);
-        } else if (this.height < this.width) {
-          rect(this.x + (this.width - (this.height - 6 * unitHeight)) / 2, this.y + 3 * unitHeight, this.height - 5 * unitHeight, this.height - 5 * unitHeight);
-        }
-      }
-    }
-
-    let prevCol1, prevCol2, newCol;
-    let x = this.x;
-    while (x < this.x + this.width + unitHeight / 2) {
-      newCol = getRandomColor(prevCol1);
-      if (random() < 2 / 3) newCol = mainColor;
-      fill(newCol);
-      prevCol1 = newCol;
-      square(x, this.y, unitHeight);
-      x += unitHeight;
-    }
-
-    x = this.x;
-    while (x < this.x + this.width + unitHeight / 2) {
-      newCol = getRandomColor(prevCol2);
-      if (random() < 2 / 3) newCol = mainColor;
-      fill(newCol);
-      prevCol2 = newCol;
-      square(x, this.y + this.height, unitHeight);
-      x += unitHeight;
-    }
-
-    let y = this.y + unitHeight;
-    while (y < this.y + this.height - unitHeight / 2) {
-      newCol = getRandomColor(prevCol1);
-      if (random() < 2 / 3) newCol = mainColor;
-      fill(newCol);
-      prevCol1 = newCol;
-      square(this.x, y, unitHeight);
-      y += unitHeight;
-    }
-  }
-}
+let animationDuration = 60; // Duration of the animation in frames
+let animationFrame = 0; // Current frame of the animation
+let animationActive = false; // Flag to control the animation
 
 function setup() {
   createCanvas(windowWidth, windowHeight); // Set up the canvas size.
@@ -95,14 +23,52 @@ function setup() {
   unitHeight = unitWidth / 4; // Calculate the unit height as a quarter of the unit width.
   noStroke(); // Disable drawing strokes.
   createComposition(); // Call the function to create the composition.
-  animateRectangles();
+  frameRate(10);
 }
 
 function draw() {
   background(backgroundColor); // Set the background color.
   translate(-width / 2 - unitHeight / 2, -height / 2 - unitHeight / 2); // Center the composition.
-  for (let recta of rectanglesList) {
-    recta.display(); // Display each rectangle.
+  if (animationActive) {
+    if (animationFrame <= animationDuration) {
+      // Calculate the interpolation value with easing
+      let t = easeInOutQuart(animationFrame / animationDuration);
+      
+      // Interpolate the background color
+      let lerpedColor = lerpColor(color(255, 252, 242), color(0, 0, 0), t);
+      background(lerpedColor);
+      
+      for (let recta of rectanglesList) {
+        // Interpolate the position of each rectangle
+        let newX = lerp(recta.x0, random(width), t);
+        let newY = lerp(recta.y0, random(height), t);
+        recta.x0 = newX;
+        recta.y0 = newY;
+        recta.display();
+      }
+      animationFrame++;
+    } else {
+      animationActive = false;
+    }
+  } else {
+    for (let recta of rectanglesList) {
+      recta.display();
+    }
+  }
+}
+
+function easeInOutQuart(t) {
+  if (t < 0.5) return 8 * t * t * t * t;
+  else {
+    let f = (t - 1);
+    return -8 * f * f * f * f + 1;
+  }
+}
+
+function mouseClicked() {
+  if (!animationActive) {
+    animationActive = true;
+    animationFrame = 0;
   }
 }
 
@@ -189,21 +155,76 @@ function generateRectangle() {
   return null;
 }
 
-function animateRectangles() {
-  for (let recta of rectanglesList) {
-    recta.updatePosition(); // Update the position of each small rectangle
+// Class definition for RectangularBlock.
+class RectangularBlock {
+  constructor(x0, y0, width, height, insideColor) {
+    this.x0 = x0;
+    this.y0 = y0;
+    this.width = width;
+    this.height = height;
+    this.insideColor = insideColor;
   }
 
-  background(backgroundColor);
-  translate(-width / 2 - unitHeight / 2, -height / 2 - unitHeight / 2);
-  
-  for (let recta of rectanglesList) {
-    recta.display(); // Displays each small rectangle
+  // Method to check if this rectangle intersects with another one.
+  intersects(otherRect) {
+    return (
+      (this.x0 <= otherRect.x0 && this.x0 + this.width > otherRect.x0) ||
+      (otherRect.x0 <= this.x0 && otherRect.x0 + otherRect.width > this.x0)
+    ) && (
+      (this.y0 <= otherRect.y0 && this.y0 + this.height > otherRect.y0) ||
+      (otherRect.y0 <= this.y0 && otherRect.y0 + otherRect.height > this.y0)
+    );
   }
 
-  requestAnimationFrame(animateRectangles); // Recursive call to implement animation
+  // Method to display the rectangle.
+  display() {
+    if (this.insideColor) {
+      fill(this.insideColor);
+      rect(this.x0 + 2 * unitHeight, this.y0 + 2 * unitHeight, this.width - 3 * unitHeight, this.height - 3 * unitHeight);
+      if ((this.width - this.height) < 2 * unitWidth) {
+        fill(colorPalette[floor(random(colorPalette.length))]);
+        if (this.width < this.height) {
+          rect(this.x0 + 3 * unitHeight, this.y0 + (this.height - (this.width - 6 * unitHeight)) / 2, this.width - 5 * unitHeight, this.width - 5 * unitHeight);
+        } else if (this.height < this.width) {
+          rect(this.x0 + (this.width - (this.height - 6 * unitHeight)) / 2, this.y0 + 3 * unitHeight, this.height - 5 * unitHeight, this.height - 5 * unitHeight);
+        }
+      }
+    }
+
+    let prevCol1, prevCol2, newCol;
+    let x = this.x0;
+    while (x < this.x0 + this.width + unitHeight / 2) {
+      newCol = getRandomColor(prevCol1);
+      if (random() < 2 / 3) newCol = mainColor;
+      fill(newCol);
+      prevCol1 = newCol;
+      square(x, this.y0, unitHeight);
+      x += unitHeight;
+    }
+
+    x = this.x0;
+    while (x < this.x0 + this.width + unitHeight / 2) {
+      newCol = getRandomColor(prevCol2);
+      if (random() < 2 / 3) newCol = mainColor;
+      fill(newCol);
+      prevCol2 = newCol;
+      square(x, this.y0 + this.height, unitHeight);
+      x += unitHeight;
+    }
+
+    let y = this.y0 + unitHeight;
+    while (y < this.y0 + this.height - unitHeight / 2) {
+      newCol = getRandomColor(prevCol1);
+      if (random() < 2 / 3) newCol = mainColor;
+      fill(newCol);
+      prevCol1 = newCol;
+      square(this.x0, y, unitHeight);
+      y += unitHeight;
+    }
+  }
 }
 
+// Function to get a random color that is different from the previous color.
 function getRandomColor(previousColor) {
   let newColor;
   while (true) {
@@ -214,6 +235,7 @@ function getRandomColor(previousColor) {
   }
 }
 
+// Function that adjusts the canvas size when the window is resized.
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   setup(); // Re-setup the sketch with the new window size.
