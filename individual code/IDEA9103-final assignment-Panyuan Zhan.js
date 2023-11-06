@@ -13,58 +13,90 @@ let rectanglesList = []; // Array to store the rectangle objects.
 
 // Function to generate a random integer between 'a' and 'b'.
 let randomInteger = (a, b) => floor(random(a, b));
-let animationFrameRate = 5; // Adjust the frame rate as needed.
 
+class RectangularBlock {
+  constructor(x, y, width, height, insideColor) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.insideColor = insideColor;
+    this.targetX = random(0, width - unitWidth); // Target X position
+    this.targetY = random(0, height - unitWidth); // Target Y position
+    this.easing = 0.001; // Easing coefficient
+  }
+
+  // Method to check if this rectangle intersects with another one.
+  intersects(otherRect) {
+    return (
+      (this.x <= otherRect.x + otherRect.width && this.x + this.width >= otherRect.x) &&
+      (this.y <= otherRect.y + otherRect.height && this.y + this.height >= otherRect.y)
+    );
+  }
+
+  // Method to update the position of the rectangle with easing.
+  updatePosition() {
+    // Computational easing
+    this.x += (this.targetX - this.x) * this.easing;
+    this.y += (this.targetY - this.y) * this.easing;
+  }
+
+  // Method to display the rectangle.
+  display() {
+    if (this.insideColor) {
+      fill(this.insideColor);
+      rect(this.x + 2 * unitHeight, this.y + 2 * unitHeight, this.width - 3 * unitHeight, this.height - 3 * unitHeight);
+      if ((this.width - this.height) < 2 * unitWidth) {
+        fill(colorPalette[floor(random(colorPalette.length))]);
+        if (this.width < this.height) {
+          rect(this.x + 3 * unitHeight, this.y + (this.height - (this.width - 6 * unitHeight)) / 2, this.width - 5 * unitHeight, this.width - 5 * unitHeight);
+        } else if (this.height < this.width) {
+          rect(this.x + (this.width - (this.height - 6 * unitHeight)) / 2, this.y + 3 * unitHeight, this.height - 5 * unitHeight, this.height - 5 * unitHeight);
+        }
+      }
+    }
+
+    let prevCol1, prevCol2, newCol;
+    let x = this.x;
+    while (x < this.x + this.width + unitHeight / 2) {
+      newCol = getRandomColor(prevCol1);
+      if (random() < 2 / 3) newCol = mainColor;
+      fill(newCol);
+      prevCol1 = newCol;
+      square(x, this.y, unitHeight);
+      x += unitHeight;
+    }
+
+    x = this.x;
+    while (x < this.x + this.width + unitHeight / 2) {
+      newCol = getRandomColor(prevCol2);
+      if (random() < 2 / 3) newCol = mainColor;
+      fill(newCol);
+      prevCol2 = newCol;
+      square(x, this.y + this.height, unitHeight);
+      x += unitHeight;
+    }
+
+    let y = this.y + unitHeight;
+    while (y < this.y + this.height - unitHeight / 2) {
+      newCol = getRandomColor(prevCol1);
+      if (random() < 2 / 3) newCol = mainColor;
+      fill(newCol);
+      prevCol1 = newCol;
+      square(this.x, y, unitHeight);
+      y += unitHeight;
+    }
+  }
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight); // Set up the canvas size.
   unitWidth = width / 16;  // Calculate the unit width based on canvas width.
   unitHeight = unitWidth / 4; // Calculate the unit height as a quarter of the unit width.
   noStroke(); // Disable drawing strokes.
-  noLoop(); // Ensure that the draw loop does not loop.
-  frameRate(animationFrameRate); // Set the animation frame rate.
   createComposition(); // Call the function to create the composition.
-  animateComposition(); // Start the animation.
+  animateRectangles();
 }
-
-function animateComposition() {
-  let frameCounter = 0;
-  let animationInterval = 1000 / animationFrameRate;
-
-  function animateFrame() {
-    // Clear the canvas on each frame.
-    background(backgroundColor);
-    translate(-width / 2 - unitHeight / 2, -height / 2 - unitHeight / 2);
-    
-    for (let recta of rectanglesList) {
-      recta.display(); // Display each rectangle.
-    }
-
-    if (frameCounter < 2000) {
-      let newRectangle = generateRectangle();
-      let canAdd = true;
-
-      for (let rectangle of rectanglesList) {
-        if (rectangle.intersects(newRectangle)) {
-          canAdd = false;
-          break;
-        }
-      }
-
-      if (canAdd) {
-        rectanglesList.push(newRectangle);
-        frameCounter++;
-      }
-    }
-
-    if (frameCounter < 2000) {
-      setTimeout(animateFrame, animationInterval); // Schedule the next frame.
-    }
-  }
-
-  animateFrame();
-}
-
 
 function draw() {
   background(backgroundColor); // Set the background color.
@@ -130,8 +162,8 @@ function generateRectangle() {
   let widthInUnits, heightInUnits;
   let attempts = 0;
   while (attempts < 100) {
-    widthInUnits = randomInteger(4, 15) / 2;
-    heightInUnits = randomInteger(4, 15) / 2;
+    widthInUnits = randomInteger(3, 10) / 2;
+    heightInUnits = randomInteger(3, 10) / 2;
     // Make sure the rectangle does not meet certain conditions that are not allowed.
     if (!((widthInUnits == 1 && heightInUnits == 1) || (widthInUnits >= 4 && heightInUnits >= 4))) {
       let x0 = randomInteger(spacingMargin, 32 - spacingMargin - widthInUnits + 1) * unitWidth;
@@ -157,76 +189,21 @@ function generateRectangle() {
   return null;
 }
 
-// Class definition for RectangularBlock.
-class RectangularBlock {
-  constructor(x0, y0, width, height, insideColor) {
-    this.x0 = x0;
-    this.y0 = y0;
-    this.width = width;
-    this.height = height;
-    this.insideColor = insideColor;
+function animateRectangles() {
+  for (let recta of rectanglesList) {
+    recta.updatePosition(); // Update the position of each small rectangle
   }
 
-  // Method to check if this rectangle intersects with another one.
-  intersects(otherRect) {
-    return (
-      (this.x0 <= otherRect.x0 && this.x0 + this.width > otherRect.x0) ||
-      (otherRect.x0 <= this.x0 && otherRect.x0 + otherRect.width > this.x0)
-    ) && (
-      (this.y0 <= otherRect.y0 && this.y0 + this.height > otherRect.y0) ||
-      (otherRect.y0 <= this.y0 && otherRect.y0 + otherRect.height > this.y0)
-    );
+  background(backgroundColor);
+  translate(-width / 2 - unitHeight / 2, -height / 2 - unitHeight / 2);
+  
+  for (let recta of rectanglesList) {
+    recta.display(); // Displays each small rectangle
   }
 
-  // Method to display the rectangle.
-  display() {
-    if (this.insideColor) {
-      fill(this.insideColor);
-      rect(this.x0 + 2 * unitHeight, this.y0 + 2 * unitHeight, this.width - 3 * unitHeight, this.height - 3 * unitHeight);
-      if ((this.width - this.height) < 2 * unitWidth) {
-        fill(colorPalette[floor(random(colorPalette.length))]);
-        if (this.width < this.height) {
-          rect(this.x0 + 3 * unitHeight, this.y0 + (this.height - (this.width - 6 * unitHeight)) / 2, this.width - 5 * unitHeight, this.width - 5 * unitHeight);
-        } else if (this.height < this.width) {
-          rect(this.x0 + (this.width - (this.height - 6 * unitHeight)) / 2, this.y0 + 3 * unitHeight, this.height - 5 * unitHeight, this.height - 5 * unitHeight);
-        }
-      }
-    }
-
-    let prevCol1, prevCol2, newCol;
-    let x = this.x0;
-    while (x < this.x0 + this.width + unitHeight / 2) {
-      newCol = getRandomColor(prevCol1);
-      if (random() < 2 / 3) newCol = mainColor;
-      fill(newCol);
-      prevCol1 = newCol;
-      square(x, this.y0, unitHeight);
-      x += unitHeight;
-    }
-
-    x = this.x0;
-    while (x < this.x0 + this.width + unitHeight / 2) {
-      newCol = getRandomColor(prevCol2);
-      if (random() < 2 / 3) newCol = mainColor;
-      fill(newCol);
-      prevCol2 = newCol;
-      square(x, this.y0 + this.height, unitHeight);
-      x += unitHeight;
-    }
-
-    let y = this.y0 + unitHeight;
-    while (y < this.y0 + this.height - unitHeight / 2) {
-      newCol = getRandomColor(prevCol1);
-      if (random() < 2 / 3) newCol = mainColor;
-      fill(newCol);
-      prevCol1 = newCol;
-      square(this.x0, y, unitHeight);
-      y += unitHeight;
-    }
-  }
+  requestAnimationFrame(animateRectangles); // Recursive call to implement animation
 }
 
-// Function to get a random color that is different from the previous color.
 function getRandomColor(previousColor) {
   let newColor;
   while (true) {
@@ -237,7 +214,6 @@ function getRandomColor(previousColor) {
   }
 }
 
-// Function that adjusts the canvas size when the window is resized.
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   setup(); // Re-setup the sketch with the new window size.
